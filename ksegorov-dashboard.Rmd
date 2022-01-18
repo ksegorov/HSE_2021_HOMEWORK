@@ -1,0 +1,81 @@
+---
+title: "Маркетинговая кампания"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: fill
+    theme: "readable"
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+library(ggplot2)
+library(readr)
+library(stringr)
+library(dplyr)
+library(lubridate)
+library(tidyverse)
+library(rpart)
+library(rpart.plot)
+marketing = read.csv("marketing_campaign.csv")
+
+marketing = marketing %>% 
+  mutate(Response = ifelse(Response == 0, "Клиент не откликнулся", "Клиент откликнулся"))
+marketing = dplyr::rename(marketing, 'Траты на вино' = MntWines)
+marketing = dplyr::rename(marketing, 'Отклик на кампанию' = Response)
+marketing = rename(marketing,'Семейное положение' = Marital_Status)
+marketing2 = marketing
+marketing3 = marketing
+marketing4 = marketing
+marketing5 = marketing
+
+
+
+```
+
+Column {data-width=550}
+-----------------------------------------------------------------------
+
+### Взаимосвязь между откликом  клиентов на кампанию и их тратами на вино
+
+```{r message=FALSE, warning=FALSE}
+marketing$`Отклик на кампанию` = as.factor(marketing$`Отклик на кампанию`)
+library(ggplot2)
+ggplot(data = marketing) +
+  geom_boxplot(aes(x = `Отклик на кампанию`, y = `Траты на вино`)) +
+  scale_fill_brewer(palette="Set2") +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+panel.background = element_blank(), axis.line = element_line(colour = "black"))
+```
+
+Column {data-width=450}
+-----------------------------------------------------------------------
+
+### точность предсказательной модели по указанным переменным
+
+```{r message=FALSE, warning=FALSE}
+
+valueBox("79%")
+```
+
+### Взаимосвязь между откликом клиентов на маркетинговую кампанию и их семейным статусом
+
+```{r message=TRUE, warning=FALSE, fig.width=6, fig.length=20, message=FALSE}
+marketing4$`Отклик на кампанию` = as.factor(marketing4$`Отклик на кампанию`)
+marketing4$`Семеное положение` = as.factor(marketing4$`Семейное положение`)
+
+marketing4 = marketing4 %>% 
+  filter(`Семейное положение` != ('Absurd')) %>% 
+filter(`Семейное положение` != ('YOLO')) %>% 
+  filter(`Семейное положение` != ('Alone'))
+### Агрегация
+graph_sp = marketing4 %>% 
+  group_by(`Семейное положение`, `Отклик на кампанию` ) %>% 
+  summarise(`Доля откликов` = n()) 
+ggplot(data = graph_sp, aes(x= `Семейное положение`, y = `Доля откликов`, fill = `Отклик на кампанию`)) +
+  geom_bar(stat = "identity", position = "fill") + 
+    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+panel.background = element_blank(), axis.line = element_line(colour = "black"))
+
+
+```
